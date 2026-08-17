@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+.venv/
+
+*_private_key.dat
+*_public_key.dat
+*.pem
+*.key
+
+*.log
+*.tmp
+~$*

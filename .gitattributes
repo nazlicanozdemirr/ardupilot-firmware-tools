@@ -1,0 +1,7 @@
+* text=auto
+*.apj binary
+*.doc binary
+*.docx binary
+*.hex binary
+*.pdf binary
+*.xlsx binary

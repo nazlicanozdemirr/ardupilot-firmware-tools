@@ -1,0 +1,34 @@
+CubeOrangePlus için
+hwdef-bl.dat dosyası
+
+(en sona eklenecek)
+
+# --- ÖZEL BOOTLOADER PORT YÖNLENDİRMELERİ ---
+
+# 1. Bootloader'ın sadece USB ve bizim belirlediğimiz 2 portu 
+SERIAL_ORDER OTG1 USART1 UART4
+
+# 2. Serial 1 için USART1 Pin Tanımlaması
+PA9  USART1_TX USART1
+PA10 USART1_RX USART1
+
+# 3. Serial 4 için UART4 Pin Tanımlaması
+PA0  UART4_TX UART4
+PA1  UART4_RX UART4
+
+
+
+Pixhawk6X için
+hwdef-bl.dat dosyası
+
+üstteki
+'# order of UARTs (and USB)
+SERIAL_ORDER OTG1 UART5 UART7 USART3 USART1' kısmını güncelleyeceğiz. USART1 eklendiği için onun eklentisi yapıldı.
+
+(telem2 altına eklenecek)
+
+# EKLEME: Serial 1 için USART1 Tanımlaması
+PB14 USART1_TX USART1
+PB15 USART1_RX USART1
+
+
