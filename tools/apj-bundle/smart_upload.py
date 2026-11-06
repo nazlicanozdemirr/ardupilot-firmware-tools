@@ -26,14 +26,11 @@ import tempfile
 from typing import Any, Dict
 
 
-# Senin verdigin uploader yolu
-UPLOADER_SCRIPT = r"C:\Users\PC_2255\Desktop\nazli\.apj_proje_dosyaları\uploader.py"
-
 PKG_MAGIC = "APJPKGv1"
 PKG_FORMAT_VERSION = 1
 
 
-def read_board_id_via_uploader(port: str) -> int:
+def read_board_id_via_uploader(port: str, uploader_script: str) -> int:
   """
   Mevcut uploader.py'yi `--identify` modunda calistirarak board_id (board_type) okur.
 
@@ -41,10 +38,10 @@ def read_board_id_via_uploader(port: str) -> int:
     board_type: 1063
   ve 1063 degerini dondurur.
   """
-  if not os.path.isfile(UPLOADER_SCRIPT):
-    raise RuntimeError(f"uploader.py bulunamadi: {UPLOADER_SCRIPT}")
+  if not os.path.isfile(uploader_script):
+    raise RuntimeError(f"uploader.py bulunamadi: {uploader_script}")
 
-  cmd = [sys.executable, UPLOADER_SCRIPT, "--port", port, "--identify"]
+  cmd = [sys.executable, uploader_script, "--port", port, "--identify"]
   print(
     "Board ID otomatik okuma icin calistirilan komut:",
     " ".join(f'"{c}"' if " " in c else c for c in cmd),
@@ -97,13 +94,13 @@ def pick_firmware(pkg: Dict[str, Any], board_id: int) -> Dict[str, Any]:
   return fw
 
 
-def run_uploader(temp_apj_path: str, port: str) -> int:
+def run_uploader(temp_apj_path: str, port: str, uploader_script: str) -> int:
   """uploader.py script'ini verilen .apj ve port ile calistirir."""
-  if not os.path.isfile(UPLOADER_SCRIPT):
-    print(f"uploader.py bulunamadi: {UPLOADER_SCRIPT}", file=sys.stderr)
+  if not os.path.isfile(uploader_script):
+    print(f"uploader.py bulunamadi: {uploader_script}", file=sys.stderr)
     return 1
 
-  cmd = [sys.executable, UPLOADER_SCRIPT, "--port", port, temp_apj_path]
+  cmd = [sys.executable, uploader_script, "--port", port, temp_apj_path]
   print("Calistirilan komut:", " ".join(f'"{c}"' if " " in c else c for c in cmd))
   try:
     r = subprocess.run(cmd)
@@ -128,16 +125,19 @@ def main() -> None:
     help="Board ID'yi elle belirt (otomatik okumayi bypass eder).",
   )
   parser.add_argument(
-    "--baud-board-id",
-    type=int,
-    default=115200,
-    help="Board ID okuma icin kullanilacak baud (varsayilan: 115200)",
+    "--uploader",
+    default=os.environ.get("ARDUPILOT_UPLOADER"),
+    help="ArduPilot uploader.py yolu (veya ARDUPILOT_UPLOADER ortam degiskeni)",
   )
   parser.add_argument(
     "package",
     help="APJPKGv1 kapsayici dosya (universal_firmware.apj gibi)",
   )
   args = parser.parse_args()
+
+  if not args.uploader:
+    parser.error("--uploader gerekli (alternatif: ARDUPILOT_UPLOADER)")
+  uploader_script = os.path.abspath(os.path.expanduser(args.uploader))
 
   pkg_path = os.path.normpath(args.package)
   if not os.path.isfile(pkg_path):
@@ -156,7 +156,7 @@ def main() -> None:
     print(f"Board ID manuel verildi: {board_id}")
   else:
     try:
-      board_id = read_board_id_via_uploader(args.port)
+      board_id = read_board_id_via_uploader(args.port, uploader_script)
       print(f"Uploader identify ile okunan Board ID: {board_id}")
     except Exception as e:
       print("Board ID otomatik okunamadi:", e, file=sys.stderr)
@@ -179,7 +179,7 @@ def main() -> None:
     print(f"Gecici .apj olusturuldu: {temp_apj_path}")
 
     # 4) uploader.py'i bu dosya ile calistir
-    rc = run_uploader(temp_apj_path, args.port)
+    rc = run_uploader(temp_apj_path, args.port, uploader_script)
   finally:
     try:
       os.unlink(temp_apj_path)
